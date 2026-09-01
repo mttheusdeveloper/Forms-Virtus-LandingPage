@@ -1,5 +1,8 @@
 -- Virtus · Instalação segura do formulário de briefing
--- Antes de usar: habilite Anonymous Sign-Ins em Authentication > Providers > Anonymous.
+--
+-- Depois de rodar este script, rode também service_role_only_migration.sql:
+-- o formulário grava pelo backend com a service role key, não é mais
+-- necessário habilitar Anonymous Sign-Ins neste projeto Supabase.
 
 create extension if not exists pgcrypto;
 

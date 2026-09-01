@@ -214,7 +214,7 @@ function App() {
     <header className="briefing-header"><div className="header-inner">
       <div className="brand-lockup"><div className="brand-mark"><img src="/assets/logo-virtus.png" alt="Virtus" /></div></div>
     </div></header>
-    <div className="briefing-shell"><section className="form-column">
+    <div className="briefing-shell briefing-intro-shell"><section className="form-column">
       <BriefingIntro onStart={() => { setStarted(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
     </section></div>
   </main>;

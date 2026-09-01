@@ -12,10 +12,9 @@ type BriefingSubmission = {
   deadline: string; finalNotes: string;
 };
 
-const supabaseUrl = process.env.BRIEFING_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 function getClient() {
+  const supabaseUrl = process.env.BRIEFING_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) throw new Error('Credenciais do Supabase não configuradas no servidor.');
   return createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 }
@@ -28,6 +27,31 @@ function isSafeWebUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function normalizeWebUrl(value: unknown) {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed || /^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^\/+/, '')}`;
+}
+
+function normalizeSubmission(input: BriefingSubmission): BriefingSubmission {
+  return {
+    ...input,
+    identityGuideLink: normalizeWebUrl(input?.identityGuideLink),
+    imageLink: normalizeWebUrl(input?.imageLink),
+    videoLink: normalizeWebUrl(input?.videoLink),
+    references: Array.isArray(input?.references)
+      ? input.references
+        .filter((reference) => reference?.url?.trim() || reference?.notes?.trim())
+        .map((reference) => ({ url: normalizeWebUrl(reference.url), notes: reference.notes?.trim() || '' }))
+      : [],
+  };
+}
+
+function referencesForStorage(references: Reference[]) {
+  return Array.from({ length: 5 }, (_, index) => references[index] ?? { url: '', notes: '' });
 }
 
 function validateSubmission(data: BriefingSubmission) {
@@ -59,16 +83,17 @@ function validateSubmission(data: BriefingSubmission) {
 
   if (
     !Array.isArray(data.references) ||
-    data.references.length !== 5 ||
+    data.references.length < 1 ||
+    data.references.length > 5 ||
     data.references.some((reference) => !reference?.url?.trim() || !reference?.notes?.trim() || reference.url.length > 2048 || reference.notes.length > 5000)
   ) {
-    throw new Error('Revise os cinco sites de referência e suas observações.');
+    throw new Error('Revise os sites de referência e suas observações.');
   }
   if ([data.identityGuideLink, data.imageLink, data.videoLink].some((link) => link && !isSafeWebUrl(link))) {
-    throw new Error('Revise os links informados. Utilize endereços iniciados por https://.');
+    throw new Error('Revise os links informados.');
   }
   if (data.references.some((reference) => !isSafeWebUrl(reference.url))) {
-    throw new Error('Revise os sites de referência. Utilize endereços iniciados por https://.');
+    throw new Error('Revise os sites de referência.');
   }
 }
 
@@ -79,7 +104,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const data = req.body as BriefingSubmission;
+    const data = normalizeSubmission(req.body as BriefingSubmission);
     validateSubmission(data);
 
     const supabase = getClient();
@@ -100,7 +125,9 @@ export default async function handler(req: any, res: any) {
       emails: data.emails?.trim() || null,
       business_hours: data.businessHours?.trim() || null,
       company_notes: data.companyNotes?.trim() || null,
-      design_references: data.references.map((reference) => ({ url: reference.url.trim(), notes: reference.notes.trim() })),
+      // O banco legado exige um array com cinco posições. As referências não
+      // preenchidas permanecem vazias, sem obrigar o usuário a informar todas.
+      design_references: referencesForStorage(data.references),
       visual_identity_status: data.visualIdentity,
       identity_guide_link: data.identityGuideLink?.trim() || null,
       identity_guide_files: [],

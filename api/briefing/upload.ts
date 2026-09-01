@@ -4,9 +4,6 @@ import { randomUUID } from 'crypto';
 export const config = { api: { bodyParser: false } };
 
 const BUCKET = 'briefing-files';
-const supabaseUrl = process.env.BRIEFING_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 const GROUP_COLUMNS: Record<string, string> = {
   'identity-guide': 'identity_guide_files',
   images: 'image_files',
@@ -35,6 +32,8 @@ function stripDiacritics(value: string) {
 }
 
 function getClient() {
+  const supabaseUrl = process.env.BRIEFING_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) throw new Error('Credenciais do Supabase não configuradas no servidor.');
   return createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 }

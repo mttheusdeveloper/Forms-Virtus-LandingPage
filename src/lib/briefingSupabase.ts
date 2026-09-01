@@ -44,6 +44,24 @@ function isSafeWebUrl(value: string) {
   } catch { return false; }
 }
 
+function normalizeWebUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed || /^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^\/+/, '')}`;
+}
+
+function normalizeSubmission(data: BriefingSubmission): BriefingSubmission {
+  return {
+    ...data,
+    identityGuideLink: normalizeWebUrl(data.identityGuideLink),
+    imageLink: normalizeWebUrl(data.imageLink),
+    videoLink: normalizeWebUrl(data.videoLink),
+    references: data.references
+      .filter((reference) => reference.url.trim() || reference.notes.trim())
+      .map((reference) => ({ url: normalizeWebUrl(reference.url), notes: reference.notes.trim() })),
+  };
+}
+
 function validateSubmission(data: BriefingSubmission) {
   const lengthChecks: Array<[string, number]> = [
     [data.companyName, 200], [data.domain, 255], [data.mainObjective, 5000],
@@ -55,14 +73,14 @@ function validateSubmission(data: BriefingSubmission) {
   if (lengthChecks.some(([value, limit]) => value.length > limit)) {
     throw new Error('Um dos textos ultrapassa o limite permitido. Reduza o conteúdo e tente novamente.');
   }
-  if (data.references.length !== 5 || data.references.some((reference) => !reference.url.trim() || !reference.notes.trim() || reference.url.length > 2048 || reference.notes.length > 5000)) {
-    throw new Error('Revise os cinco sites de referência e suas observações.');
+  if (data.references.length < 1 || data.references.length > 5 || data.references.some((reference) => !reference.url.trim() || !reference.notes.trim() || reference.url.length > 2048 || reference.notes.length > 5000)) {
+    throw new Error('Revise os sites de referência e suas observações.');
   }
   if ([data.identityGuideLink, data.imageLink, data.videoLink].some((link) => !isSafeWebUrl(link))) {
-    throw new Error('Revise os links informados. Utilize endereços iniciados por https://.');
+    throw new Error('Revise os links informados.');
   }
   if (data.references.some((reference) => !isSafeWebUrl(reference.url))) {
-    throw new Error('Revise os sites de referência. Utilize endereços iniciados por https://.');
+    throw new Error('Revise os sites de referência.');
   }
 }
 
@@ -75,13 +93,14 @@ async function readJsonSafely(response: Response): Promise<{ error?: string; sub
 }
 
 export async function submitBriefing(data: BriefingSubmission, files: BriefingFiles) {
-  validateSubmission(data);
+  const normalizedData = normalizeSubmission(data);
+  validateSubmission(normalizedData);
   validateFiles(files);
 
   const submitResponse = await fetch('/api/briefing/submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(normalizedData),
   });
   const submitBody = await readJsonSafely(submitResponse);
   if (!submitResponse.ok || !submitBody?.submissionId) {

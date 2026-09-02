@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import {
-  ArrowLeft, ArrowRight, Building2, CalendarClock, Check,
+  ArrowLeft, ArrowRight, Building2, Check,
   ClipboardCheck, CloudUpload, FileText, Globe2, Image, Info, LayoutTemplate,
   MessageSquareText, Palette, Paperclip, Sparkles, Target, Video, X,
 } from 'lucide-react';
@@ -24,7 +24,7 @@ const INITIAL_DATA: BriefingData = {
   productsServices: '', productsDescription: '', missionVisionValues: '', address: '',
   contactInfo: '', phones: '', emails: '', businessHours: '', companyNotes: '',
   references: Array.from({ length: 5 }, () => ({ url: '', notes: '' })),
-  visualIdentity: '', identityGuideLink: '', imageLink: '', videoLink: '', deadline: '', finalNotes: '',
+  visualIdentity: '', identityGuideLink: '', imageLink: '', videoLink: '', deadline: '30 dias', finalNotes: '',
 };
 const INITIAL_FILES: FileState = { identityGuide: [], images: [], videos: [] };
 
@@ -35,7 +35,6 @@ const STEPS = [
   { title: 'Referências de Design', short: 'Referências', description: 'Sites e experiências que inspiram', icon: LayoutTemplate },
   { title: 'Identidade Visual', short: 'Identidade', description: 'Marca, cores e materiais existentes', icon: Palette },
   { title: 'Materiais de Mídia', short: 'Mídia', description: 'Imagens e vídeos para o projeto', icon: Image },
-  { title: 'Prazo', short: 'Prazo', description: 'Quando você deseja colocar o site no ar', icon: CalendarClock },
   { title: 'Observações Finais', short: 'Finalização', description: 'Revise e compartilhe os últimos detalhes', icon: MessageSquareText },
 ];
 
@@ -270,15 +269,9 @@ function App() {
               <div className="form-callout subtle"><Info size={17} /><p><strong>Não possui os materiais agora?</strong><span>Sem problema. Você pode enviar os arquivos posteriormente para nossa equipe.</span></p></div>
             </>}
             {currentStep === 6 && <>
-              <div className="deadline-intro"><CalendarClock size={25} /><p><strong>Qual é o prazo ideal para o lançamento?</strong><span>O prazo começa a contar após a entrega de todos os materiais e aprovação do escopo.</span></p></div>
-              <div className={`deadline-grid ${errors.deadline ? 'has-error' : ''}`}>{['15 dias', '30 dias', '45 dias', '60 dias'].map((option, index) => <OriginButton effectOnly active={data.deadline === option} type="button" key={option} className={`deadline-card ${data.deadline === option ? 'selected' : ''}`} onClick={() => update('deadline', option)} aria-invalid={Boolean(errors.deadline) || undefined}>
-                <span className="deadline-check">{data.deadline === option && <Check size={13} strokeWidth={3} />}</span><strong>{option.replace(' dias', '')}</strong><small>dias</small><em>{index === 0 ? 'Prioridade máxima' : index === 1 ? 'Mais escolhido' : index === 2 ? 'Prazo confortável' : 'Maior flexibilidade'}</em>
-              </OriginButton>)}</div>{errors.deadline && <span className="error-message">{errors.deadline}</span>}
-            </>}
-            {currentStep === 7 && <>
               <Field label="Outras informações que queira compartilhar" hint="Use este espaço para restrições, preferências, ideias ou qualquer detalhe que ainda não apareceu no briefing."><textarea rows={7} value={data.finalNotes} onChange={(e) => update('finalNotes', e.target.value)} placeholder="Escreva aqui suas observações finais..." autoFocus /></Field>
               <div className="review-card"><div className="review-title"><ClipboardCheck size={18} /><div><strong>Revise antes de enviar</strong><span>Você pode voltar a qualquer etapa para fazer ajustes.</span></div></div><div className="review-grid">
-                <OriginButton effectOnly type="button" onClick={() => goToStep(0)}><small>Empresa</small><strong>{data.companyName || 'Não informado'}</strong></OriginButton><OriginButton effectOnly type="button" onClick={() => goToStep(1)}><small>Objetivo</small><strong>{truncate(data.mainObjective) || 'Não informado'}</strong></OriginButton><OriginButton effectOnly type="button" onClick={() => goToStep(4)}><small>Identidade visual</small><strong>{data.visualIdentity || 'Não informado'}</strong></OriginButton><OriginButton effectOnly type="button" onClick={() => goToStep(6)}><small>Prazo desejado</small><strong>{data.deadline || 'Não informado'}</strong></OriginButton>
+                <OriginButton effectOnly type="button" onClick={() => goToStep(0)}><small>Empresa</small><strong>{data.companyName || 'Não informado'}</strong></OriginButton><OriginButton effectOnly type="button" onClick={() => goToStep(1)}><small>Objetivo</small><strong>{truncate(data.mainObjective) || 'Não informado'}</strong></OriginButton><OriginButton effectOnly type="button" onClick={() => goToStep(4)}><small>Identidade visual</small><strong>{data.visualIdentity || 'Não informado'}</strong></OriginButton>
               </div></div>
               <label className={`consent-row ${consent ? 'checked' : ''}`}><input className="consent-input" type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setErrors((previous) => { const next = { ...previous }; delete next.consent; return next; }); }} /><span className="consent-check" aria-hidden="true">{consent && <Check size={13} strokeWidth={3} />}</span><span>Confirmo que as informações preenchidas estão corretas e autorizo o contato da equipe Virtus sobre este projeto.</span></label>{errors.consent && <span className="error-message">{errors.consent}</span>}{errors.submit && <div className="submit-error">{errors.submit}</div>}
             </>}
@@ -307,7 +300,6 @@ function validateStep(step: number, data: BriefingData): Record<string, string> 
     else if (filledReferences.some((reference) => !reference.url.trim() || !reference.notes.trim())) errors.references = 'Complete o link e a observação da referência iniciada.';
   }
   if (step === 4 && !data.visualIdentity) errors.visualIdentity = 'Selecione uma opção.';
-  if (step === 6 && !data.deadline) errors.deadline = 'Selecione o prazo desejado.';
   return errors;
 }
 

@@ -232,7 +232,7 @@ function App() {
           <div className="form-content">
             {Object.keys(errors).some((key) => key !== 'submit') && <div className="validation-notice" role="alert"><Info size={16} /><span><strong>Antes de continuar</strong>Preencha os campos obrigatórios destacados abaixo.</span></div>}
             {currentStep === 0 && <>
-              <Field label="Nome da empresa" required><input className={errors.companyName ? 'field-error' : ''} value={data.companyName} onChange={(e) => update('companyName', e.target.value)} placeholder="Ex.: Virtus Tecnologia" autoFocus />{errors.companyName && <span className="error-message">{errors.companyName}</span>}</Field>
+              <Field label="Nome da empresa" required><input className={errors.companyName ? 'field-error' : ''} value={data.companyName} onChange={(e) => update('companyName', e.target.value)} placeholder="Ex.: Virtus Ads" autoFocus />{errors.companyName && <span className="error-message">{errors.companyName}</span>}</Field>
               <ChoiceGroup label="Já possui domínio e hospedagem?" value={data.domainStatus} options={['Sim', 'Não']} onChange={(value) => update('domainStatus', value)} invalid={Boolean(errors.domainStatus)} />{errors.domainStatus && <span className="error-message choice-error">{errors.domainStatus}</span>}
               <Field label="Domínio desejado ou já registrado" hint="Caso ainda não tenha definido, informe uma sugestão." required><div className="input-with-icon"><Globe2 size={16} /><input className={errors.domain ? 'field-error' : ''} value={data.domain} onChange={(e) => update('domain', e.target.value)} placeholder="www.suaempresa.com.br" /></div>{errors.domain && <span className="error-message">{errors.domain}</span>}</Field>
             </>}
